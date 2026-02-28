@@ -25,29 +25,46 @@ class Game_Shed():
         self.win = pygame.display.set_mode((self.w,self.h),flags=pygame.RESIZABLE)
         self.x_scaler = self.w/1920
         self.y_scaler = self.h/1080
-        self.line_dests = ((),())
+        Lines.x_scale = self.x_scaler
+        Lines.y_scale = self.y_scaler
+        self.Lines1 = [Lines((255,255,255),(10,100),(20,100)),
+                       Lines((255,255,255),(10,100),(20,300))]
 
     def quit_func(self,event):
         pygame.quit()
         exit()
 
-    def size_change_func(self,event):
+    def change_size_and_dest_of_lines(self,line_list):
+        for line in line_list:
+            line.change_line_size()
+            line.change_line_dest()
+
+    def win_size_change_func(self,event):
         self.w , self.h = event.dict["x"] , event.dict["y"]
         self.x_scaler = self.w/1920
         self.y_scaler = self.h/1080
+        Lines.x_scale = self.x_scaler
+        Lines.y_scale = self.y_scaler
+        self.change_size_and_dest_of_lines(self.Lines1)
+        self.line_blit(self.Lines1)
+        pygame.display.flip()
+
 
     event_funcs = {
         QUIT : quit_func,
-        WINDOWSIZECHANGED : size_change_func
+        WINDOWSIZECHANGED : win_size_change_func
     }
 
     def line_blit(self,lines):
         self.win.fill((0,0,0)) # i would want this to not be here but before where i will have everything get blitted. 
-        for line,dest in zip(lines,self.line_dests):
-            self.win.blit(line,dest)  # the lines can be from a class in diff module or class in this idk
+        for line in lines:
+            self.win.blit(line.line,line.dest)
 
     def main(self):
+        self.line_blit(self.Lines1)
+        pygame.display.flip()
         while True:
+            
             for event in pygame.event.get(EVENTS_LIST):
                 self.event_funcs[event.type](self,event)
 
@@ -56,3 +73,4 @@ class Game_Shed():
                 pygame.event.clear()
                 pygame.display.flip()
 Game_Shed().main()
+
