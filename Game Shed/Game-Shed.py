@@ -1,13 +1,13 @@
 import pygame
-from pygame.constants import QUIT,K_F11,WINDOWSIZECHANGED
+from pygame.constants import QUIT,K_F11,VIDEORESIZE
 from sys import exit
-from Lines import Lines
+from UI import UI,Lines
 
 pygame.init()
 
 #pygame.system.get_pref_path("nnw-2","Game Shed") remember this for storage of settings etc
 
-EVENTS_LIST = [QUIT,WINDOWSIZECHANGED]
+EVENTS_LIST = [QUIT,VIDEORESIZE]
 
 pygame.event.set_blocked(None)
 pygame.event.set_allowed(EVENTS_LIST)
@@ -25,44 +25,41 @@ class Game_Shed():
         self.win = pygame.display.set_mode((self.w,self.h),flags=pygame.RESIZABLE)
         self.x_scaler = self.w/1920
         self.y_scaler = self.h/1080
-        Lines.x_scale = self.x_scaler
-        Lines.y_scale = self.y_scaler
-        self.Lines1 = [Lines((255,255,255),(10,100),(20,100)),
-                       Lines((255,255,255),(10,100),(20,300))]
+        UI.x_scale = self.x_scaler
+        UI.y_scale = self.y_scaler
+        self.Lines1 = pygame.sprite.Group()
+
+        Lines((255,255,255),(960,540),(0,0),self.Lines1)
 
     def quit_func(self,event):
         pygame.quit()
         exit()
 
-    def change_size_and_dest_of_lines(self,line_list):
-        for line in line_list:
-            line.change_line_size()
-            line.change_line_dest()
-
     def win_size_change_func(self,event):
-        self.w , self.h = event.dict["x"] , event.dict["y"]
+        self.w , self.h = event.w , event.h
         self.x_scaler = self.w/1920
         self.y_scaler = self.h/1080
-        Lines.x_scale = self.x_scaler
-        Lines.y_scale = self.y_scaler
-        self.change_size_and_dest_of_lines(self.Lines1)
-        self.line_blit(self.Lines1)
-        pygame.display.flip()
+        UI.x_scale = self.x_scaler
+        UI.y_scale = self.y_scaler
 
+        self.Lines1.update(window_changed_size=True)
+
+        self.render()
+        
+    def render(self):
+        self.win.fill((0,0,0)) # want to change to fill based on a background var in future or have the win be an image
+
+        self.Lines1.draw(self.win)
+
+        pygame.display.flip()
 
     event_funcs = {
         QUIT : quit_func,
-        WINDOWSIZECHANGED : win_size_change_func
+        VIDEORESIZE : win_size_change_func
     }
 
-    def line_blit(self,lines):
-        self.win.fill((0,0,0)) # i would want this to not be here but before where i will have everything get blitted. 
-        for line in lines:
-            self.win.blit(line.line,line.dest)
-
     def main(self):
-        self.line_blit(self.Lines1)
-        pygame.display.flip()
+        self.render()
         while True:
             
             for event in pygame.event.get(EVENTS_LIST):
@@ -71,6 +68,19 @@ class Game_Shed():
             if pygame.key.get_just_released()[K_F11]:
                 pygame.display.toggle_fullscreen()
                 pygame.event.clear()
-                pygame.display.flip()
+
+                self.w, self.h = self.win.get_size()
+                
+                self.x_scaler = self.w / 1920
+                self.y_scaler = self.h / 1080
+                UI.x_scale = self.x_scaler
+                UI.y_scale = self.y_scaler
+                
+                self.Lines1.update(window_changed_size=True)
+                self.render()
+
 Game_Shed().main()
 
+
+
+# I want to move to using pygame.Window instead of display setmode
