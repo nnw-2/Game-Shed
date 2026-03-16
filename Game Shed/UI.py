@@ -59,14 +59,10 @@ class Images(UI):
                                                                        int(self.initial_size[1] * UI.y_scale))).convert_alpha()
         self.rect.size = self.image.get_size()
 
-class Colour_Changing_Imgaes(Images):
+class Colour_Changing_Images(Images):
     def __init__(self, image: str, colour:tuple[int,int,int], initial_size: tuple[int, int], destination: tuple[int, int], *sprite_groups):
         self.colour = colour
         super().__init__(image, initial_size, destination, *sprite_groups)
-        self.image:pygame.Surface = pygame.Surface((1,1),pygame.SRCALPHA)
-
-        self.change_size()
-        self.change_dest()
 
     def change_size(self):
         super().change_size()
