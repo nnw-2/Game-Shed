@@ -22,12 +22,17 @@ class UI(pygame.sprite.Sprite):
     def change_colour(self,colour):
         ...
 
+    def change_alpha(self,alpha):
+        ...
+
     def update(self, **kwargs):
         if kwargs.get("window_changed_size", False):
             self.change_dest()
             self.change_size()
         if kwargs.get("colour_change", False):
             self.change_colour(kwargs.get("colour_change"))
+        if kwargs.get("alpha_change", False):
+            self.change_alpha(kwargs.get("alpha_change"))
 
 class Lines(UI):
     def __init__(self,colour:tuple[int,int,int], initial_size:tuple[int,int], destination:tuple[int,int], *sprite_groups):
@@ -45,6 +50,23 @@ class Lines(UI):
     def change_colour(self,colour):
         self.colour = colour
         self.image.fill(self.colour)
+
+class Lines_Alpha(Lines):
+    def __init__(self,colour:tuple[int,int,int], alpha:int, initial_size:tuple[int,int], destination:tuple[int,int], *sprite_groups):
+        self.alpha = alpha
+        super().__init__(colour,initial_size, destination, *sprite_groups)
+        
+    def change_size(self):
+        super().change_size()
+        self.change_alpha(self.alpha)
+    
+    def change_colour(self, colour):
+        super().change_colour(colour)
+        self.change_alpha(self.alpha)
+    
+    def change_alpha(self, alpha):
+        self.alpha = alpha
+        self.image.set_alpha(alpha)
 
 class Images(UI):
     def __init__(self,image:str, initial_size:tuple[int,int], destination:tuple[int,int], *sprite_groups):

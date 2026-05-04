@@ -1,7 +1,7 @@
 import pygame
 from pygame.constants import QUIT,K_F11,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED , K_a , K_d
 from sys import exit
-from UI import UI,Lines,Images,Colour_Changing_Images
+from UI import UI,Lines,Lines_Alpha,Images,Colour_Changing_Images
 import os
 import json
 
@@ -43,10 +43,26 @@ class Game_Shed():
         self.Const_Colour_Imgs = pygame.sprite.Group()
         self.Colour_Changing_Imgs = pygame.sprite.Group()
 
-        Lines(self.line_colour,(1920,10),(0,120),self.Lines1)
-        Lines(self.line_colour,(10,1080),(100,0),self.Lines1)
+        # scroll bars probably going to be a low opacity line with a slightly higher opacity line on top 
+        #the smaller higher opacity line will change size depending on how many games or things there are (if more then line smaller)
+        self.Scroll_Bar_Lines1 = pygame.sprite.Group() # scroll bar for menu on left
+        self.Scroll_Bar_Lines2 = pygame.sprite.Group() # scroll bar for the games
+        
+        #implement a group for the games and the file management stuff.
+        #when scrolling through determine if something should/shouldn't be rendered based on height on screen
+        #for all of the elements in the sprite group check their position and if they are in wanted range add them to a temp
+        #sprite group and render that temp sprite group, for all the sprites in the main group when scrolling update their positions
+        #but only render the ones in the temp sprite group
+
+        Lines(self.line_colour,(1920,7),(0,120),self.Lines1)
+        Lines(self.line_colour,(7,960),(180,120),self.Lines1)
+
+        Colour_Changing_Images(os.path.join(BASE_PATH,"Images","cog.png"),self.icon_colour,(50,50),(20,20),self.Images1,self.Colour_Changing_Imgs)
         Colour_Changing_Images(os.path.join(BASE_PATH,"Images","icon.png"),self.icon_colour,(100,100),(500,500),self.Images1,self.Colour_Changing_Imgs) # this one is just for testing
+        
         Images(os.path.join(BASE_PATH,"Images","icon.png"),(100,100),(700,700),self.Images1,self.Const_Colour_Imgs)
+
+        Lines_Alpha(self.line_colour,100,(7,960),(166,120),self.Scroll_Bar_Lines1)
 
     def load_settings(self):
         if os.path.exists(self.settings_path):
@@ -79,6 +95,7 @@ class Game_Shed():
 
         self.Lines1.update(window_changed_size=True)
         self.Images1.update(window_changed_size=True)
+        self.Scroll_Bar_Lines1.update(window_changed_size=True)
 
         self.render()
 
@@ -94,6 +111,7 @@ class Game_Shed():
         #background light can be customised if they want the opacity of the image to be lower
         self.Lines1.draw(self.win)
         self.Images1.draw(self.win)
+        self.Scroll_Bar_Lines1.draw(self.win)
         self.win_actual.flip()
 
     event_funcs = {
@@ -135,10 +153,14 @@ class Game_Shed():
             if pygame.key.get_just_released()[K_a]:
                 self.Colour_Changing_Imgs.update(colour_change=(0,0,255))
                 self.Lines1.update(colour_change=(255,0,0))
+                self.Scroll_Bar_Lines1.update(colour_change=(0,0,255),alpha_change=255)
+
                 self.render()
             if pygame.key.get_just_released()[K_d]:
                 self.Colour_Changing_Imgs.update(colour_change=(0,255,0))
                 self.Lines1.update(colour_change=(0,255,0))
+                self.Scroll_Bar_Lines1.update(colour_change=(0,255,0),alpha_change=70)
+
                 self.render()
 
             self.clock.tick(self.fps)
