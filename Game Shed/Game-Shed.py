@@ -17,7 +17,6 @@ pygame.event.set_allowed(EVENTS_LIST)
 class Game_Shed():
     def __init__(self):
         self.pref_path = pygame.system.get_pref_path("nnw-2","Game Shed")
-        self.settings_path = os.path.join(self.pref_path,"settings.json")
         self.settings = self.load_settings()
 
         self.line_colour = self.settings["line_colour"]
@@ -62,11 +61,21 @@ class Game_Shed():
         
         Images(os.path.join(BASE_PATH,"Images","icon.png"),(100,100),(700,700),self.Images1,self.Const_Colour_Imgs)
 
-        Lines_Alpha(self.line_colour,100,(7,960),(166,120),self.Scroll_Bar_Lines1)
+        Lines_Alpha(self.line_colour,100,(7,953),(166,127),self.Scroll_Bar_Lines1)
+        Lines_Alpha(self.line_colour,120,(7,93),(166,127),self.Scroll_Bar_Lines1)
 
+        Lines_Alpha(self.line_colour,100,(7,953),(1900,127),self.Scroll_Bar_Lines2)
+        Lines_Alpha(self.line_colour,120,(7,93),(1900,127),self.Scroll_Bar_Lines2)
+
+
+    #make all of the saves and loads part of a separate module ts is taking too much space
+
+    #also need to add a method to not include specific paths when using the folder paths to add exe files
+    #an exclude list which should also be its own json file.
     def load_settings(self):
-        if os.path.exists(self.settings_path):
-            with open(self.settings_path, "r") as settings_f:
+        settings_path = os.path.join(self.pref_path,"settings.json")
+        if os.path.exists(settings_path):
+            with open(settings_path, "r") as settings_f:
                 return json.load(settings_f)
 
         return {
@@ -75,9 +84,13 @@ class Game_Shed():
             "background_colour" : (0,0,0)
         }
 
-    def save_settings(self):
-        with open(self.settings_path, "w") as settings_f:
+    def save_settings(self): #remove this and change to using the one in Files.py
+        settings_path = os.path.join(self.pref_path,"settings.json")
+        with open(settings_path, "w") as settings_f:
             json.dump(self.settings, settings_f, indent=4)
+
+    def load_game_folders(self): #remove this and change to using the one in Files.py
+        folders_path = os.path.join(self.pref_path,"folders.json")
 
     def quit_func(self,event):
         self.win_actual.destroy()
@@ -96,6 +109,7 @@ class Game_Shed():
         self.Lines1.update(window_changed_size=True)
         self.Images1.update(window_changed_size=True)
         self.Scroll_Bar_Lines1.update(window_changed_size=True)
+        self.Scroll_Bar_Lines2.update(window_changed_size=True)
 
         self.render()
 
@@ -112,6 +126,7 @@ class Game_Shed():
         self.Lines1.draw(self.win)
         self.Images1.draw(self.win)
         self.Scroll_Bar_Lines1.draw(self.win)
+        self.Scroll_Bar_Lines2.draw(self.win)
         self.win_actual.flip()
 
     event_funcs = {
