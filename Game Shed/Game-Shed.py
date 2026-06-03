@@ -4,6 +4,7 @@ from sys import exit
 from UI import UI,Lines,Lines_Alpha,Images,Colour_Changing_Images
 import os
 import json
+from Files import Save_Load
 
 pygame.init()
 
@@ -13,15 +14,13 @@ BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 pygame.event.set_blocked(None)
 pygame.event.set_allowed(EVENTS_LIST)
 
+FILES = Save_Load()
 
 class Game_Shed():
     def __init__(self):
-        self.pref_path = pygame.system.get_pref_path("nnw-2","Game Shed")
-        self.settings = self.load_settings()
-
-        self.line_colour = self.settings["line_colour"]
-        self.icon_colour = self.settings["icon_colour"]
-        self.background_colour = self.settings["background_colour"]
+        self.line_colour = FILES.settings["line_colour"]
+        self.icon_colour = FILES.settings["icon_colour"]
+        self.background_colour = FILES.settings["background_colour"]
 
         self.w , self.h = pygame.display.get_desktop_sizes()[0]
         self.w = int(self.w * 0.5)
@@ -67,35 +66,10 @@ class Game_Shed():
         Lines_Alpha(self.line_colour,100,(7,953),(1900,127),self.Scroll_Bar_Lines2)
         Lines_Alpha(self.line_colour,120,(7,93),(1900,127),self.Scroll_Bar_Lines2)
 
-
-    #make all of the saves and loads part of a separate module ts is taking too much space
-
-    #also need to add a method to not include specific paths when using the folder paths to add exe files
-    #an exclude list which should also be its own json file.
-    def load_settings(self):
-        settings_path = os.path.join(self.pref_path,"settings.json")
-        if os.path.exists(settings_path):
-            with open(settings_path, "r") as settings_f:
-                return json.load(settings_f)
-
-        return {
-            "line_colour" : (255,255,255),
-            "icon_colour" : (255,255,255),
-            "background_colour" : (0,0,0)
-        }
-
-    def save_settings(self): #remove this and change to using the one in Files.py
-        settings_path = os.path.join(self.pref_path,"settings.json")
-        with open(settings_path, "w") as settings_f:
-            json.dump(self.settings, settings_f, indent=4)
-
-    def load_game_folders(self): #remove this and change to using the one in Files.py
-        folders_path = os.path.join(self.pref_path,"folders.json")
-
     def quit_func(self,event):
         self.win_actual.destroy()
         pygame.quit()
-        self.save_settings()
+        FILES.save(settings=True)
         exit()
 
     def win_size_change_func(self,event):
