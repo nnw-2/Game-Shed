@@ -50,7 +50,7 @@ class Save_Load():
         self.game_folders = self.load_game_folders()
         self.executables = self.load_individual_executables()
 
-    def determine_main_exe(self,root,exe):
+    def is_main_exe(self,root,exe):
         #compare the root folder name to the passed in exe 
         ...
 
@@ -129,24 +129,30 @@ class Save_Load():
                     close_exe_list.append(f)
         
         if len(close_exe_list) != 0:
-            ind_for_removal = set()
-            for i,exe in enumerate(close_exe_list):
+            new_useful_list = []
+            for exe in close_exe_list:
+                #add more stuff within this for loop, no need to loop over again
                 filename_lower = os.path.basename(exe).lower()
                 if exe in self.IGNORE_EXACT or self.IGNORE_REGEX.match(filename_lower):
-                    ind_for_removal.add(exe)
-                #add more stuff within this for loop, no need to loop over again
-                elif exe : # check if a launceher 
-                    ...
-                elif exe : #check if Game.exe or game name .exe
-                    ...
+                    ... #don't add it to the new list, it isn't wanted
+                elif exe in self.LAUNCHER_EXACT or self.LAUNCHER_REGEX.match(filename_lower): # check if a launceher 
+                    new_useful_list.append((exe,"launcher"))
+                elif exe in self.GAME_EXACT or self.is_main_exe(root,filename_lower): #check if Game.exe or game name .exe
+                    new_useful_list.append((exe,"game"))
+                else:
+                    new_useful_list.append((exe,"unknown"))
                 
-            post_removal_list = [item for i,item in enumerate(close_exe_list) if i not in ind_for_removal]
-            match len(post_removal_list):
+            match len(new_useful_list):
                 case 0:
                     ...
                 case 1:
-                    return post_removal_list #its probably what is wanted
+                    return new_useful_list #its probably what is wanted
                 case _:
+                    #check if there are elements where index 1 is "game"
+                    #if there is only one then return that unless it requires a launcher.
+                    #if there is only a launcher use that.
+                    #if unknown then return the exe and have later when I display which exes can be run
+                    #display to check the file path is correct and don't allow it to run until confirmed
                     ...
                     
         
