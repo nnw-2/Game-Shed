@@ -20,6 +20,14 @@ class Save_Load():
         "sysconfig.exe"
     }
 
+    LAUNCHER_EXACT = {
+        "launcher.exe"
+    }
+
+    GAME_EXACT = {
+        "game.exe"
+    }
+
     IGNORE_REGEX = re.compile(
         r"^(.*[\\/])?"
         r"("
@@ -32,6 +40,8 @@ class Save_Load():
         r")\.exe$",
     )
 
+    LAUNCHER_REGEX = re.compile("")
+
     def __init__(self) -> None:
         self.pref_path = pygame.system.get_pref_path("nnw-2","Game Shed")
         self.os = system()
@@ -39,6 +49,10 @@ class Save_Load():
         self.game_folder_collection = self.load_game_folder_collection()
         self.game_folders = self.load_game_folders()
         self.executables = self.load_individual_executables()
+
+    def determine_main_exe(self,root,exe):
+        #compare the root folder name to the passed in exe 
+        ...
 
     def save(self,settings=False,folder_collection=False,game_folders=False):
         save_deciders = (settings,folder_collection,game_folders)
@@ -121,6 +135,10 @@ class Save_Load():
                 if exe in self.IGNORE_EXACT or self.IGNORE_REGEX.match(filename_lower):
                     ind_for_removal.add(exe)
                 #add more stuff within this for loop, no need to loop over again
+                elif exe : # check if a launceher 
+                    ...
+                elif exe : #check if Game.exe or game name .exe
+                    ...
                 
             post_removal_list = [item for i,item in enumerate(close_exe_list) if i not in ind_for_removal]
             match len(post_removal_list):
@@ -130,8 +148,7 @@ class Save_Load():
                     return post_removal_list #its probably what is wanted
                 case _:
                     ...
-                    # re.findall()
-                    # if "launcher.exe"
+                    
         
         #close_exe_list was or became empty. Check to see if one of the strings in exe_list is named Game.exe
         #or if it is named launcher or if the name is either the same or an abbreviation of the root folder name
