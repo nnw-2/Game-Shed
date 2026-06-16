@@ -21,26 +21,45 @@ class Save_Load():
     }
 
     LAUNCHER_EXACT = {
-        "launcher.exe"
+        "launcher.exe",
+        "gamelauncher.exe",
+        "play.exe",
+        "start.exe",
+        "autorun.exe",
+        "boot.exe",
+        "booter.exe",
+        "launch.exe",
+        "run.exe"
     }
 
     GAME_EXACT = {
-        "game.exe"
+        "game.exe",
+        "main.exe",
+        "client.exe",
+        "app.exe",
+        "application.exe",
+        "bin.exe",
+        "player.exe",
+        "playgame.exe",
+        "gameclient.exe"
     }
 
     IGNORE_REGEX = re.compile(
         r"^(.*[\\/])?"
         r"("
         r"unins(t(all(er)?)?|\d{3})|"
-        r"unwise|"                   
-        r".*setup|"                  
-        r"vc_?redist.*|"             
-        r"dotnetfx.*|"               
-        r"physx.*"                   
+        r"unwise|"
+        r".*setup|"
+        r"vc_?redist.*|"
+        r"dotnetfx.*|"
+        r"physx.*"
         r")\.exe$",
     )
 
-    LAUNCHER_REGEX = re.compile("")
+    LAUNCHER_REGEX = re.compile(r"^(.*[\\/])?"
+                                r".*"
+                                r"launch(er)?"
+                                r".*\.exe$")
 
     def __init__(self) -> None:
         self.pref_path = pygame.system.get_pref_path("nnw-2","Game Shed")
@@ -50,9 +69,19 @@ class Save_Load():
         self.game_folders = self.load_game_folders()
         self.executables = self.load_individual_executables()
 
-    def is_main_exe(self,root,exe):
+    def is_main_exe(self,root:str,exe:str) -> bool:
         #compare the root folder name to the passed in exe 
-        ...
+        game_folder = root.rpartition(os.sep)[2]
+        exe_name_only = exe.rpartition(os.sep)[2][:-4]
+        if exe_name_only == game_folder.lower():
+            return True
+        #try and see if an abbreviation
+        abbreviated_folder = "".join([letter.lower() for letter in game_folder if letter.isupper()])
+        if exe_name_only == abbreviated_folder:
+            return True
+        #try separate the folder name into separate parts and see if a combination of those is in the exe name
+
+        return False
 
     def save(self,settings=False,folder_collection=False,game_folders=False):
         save_deciders = (settings,folder_collection,game_folders)
