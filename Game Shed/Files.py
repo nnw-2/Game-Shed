@@ -20,18 +20,6 @@ class Save_Load():
         "sysconfig.exe"
     }
 
-    LAUNCHER_EXACT = {
-        "launcher.exe",
-        "gamelauncher.exe",
-        "play.exe",
-        "start.exe",
-        "autorun.exe",
-        "boot.exe",
-        "booter.exe",
-        "launch.exe",
-        "run.exe"
-    }
-
     GAME_EXACT = {
         "game.exe",
         "main.exe",
@@ -52,14 +40,10 @@ class Save_Load():
         r".*setup|"
         r"vc_?redist.*|"
         r"dotnetfx.*|"
-        r"physx.*"
+        r"physx.*|"
+        r".*crashpad.*"
         r")\.exe$",
     )
-
-    LAUNCHER_REGEX = re.compile(r"^(.*[\\/])?"
-                                r".*"
-                                r"launch(er)?"
-                                r".*\.exe$")
 
     def __init__(self) -> None:
         self.pref_path = pygame.system.get_pref_path("nnw-2","Game Shed")
@@ -71,19 +55,32 @@ class Save_Load():
 
     def is_main_exe(self,root:str,exe:str) -> bool:
         #compare the root folder name to the passed in exe 
-        game_folder = root.rpartition(os.sep)[2]
-        exe_name_only = exe.rpartition(os.sep)[2][:-4]
-        if exe_name_only == game_folder.lower():
+        game_folder = os.path.basename(root)
+        exe_name_only = exe[:-4]
+        
+        if exe_name_only.lower() == game_folder.lower():
             return True
         #try and see if an abbreviation
         abbreviated_folder = "".join([letter.lower() for letter in game_folder if letter.isupper()])
-        if exe_name_only == abbreviated_folder:
+        if exe_name_only.lower() == abbreviated_folder:
             return True
-        #try separate the folder name into separate parts and see if a combination of those is in the exe name
+       
+        seper_exe_name = re.sub(r"(?<=[a-z])(?=[A-Z])", " " , exe_name_only)
+        full_seper_exe_name = re.findall(r"[a-z]+|[0-9]+",seper_exe_name.lower())
+
+        similar_names = True
+        for s in full_seper_exe_name:
+            if s in game_folder.lower():
+                continue
+            similar_names = False
+            break
+        
+        if similar_names:
+            return True
 
         return False
 
-    def save(self,settings=False,folder_collection=False,game_folders=False):
+    def save(self,settings=False,folder_collection=False,game_folders=False) -> None:
         save_deciders = (settings,folder_collection,game_folders)
         
         save_options = (
@@ -97,11 +94,11 @@ class Save_Load():
                 with open(save_options[i][0], "w") as f:
                     json.dump(save_options[i][1],f,indent=4)
     
-    def load(self,path):
+    def load(self,path:str):
         with open(path, "r") as f:
             return json.load(f)
 
-    def load_settings(self):
+    def load_settings(self) -> dict[str , tuple]:
         settings_path = os.path.join(self.pref_path,"settings.json")
         if os.path.exists(settings_path):
             return self.load(settings_path)
@@ -112,7 +109,7 @@ class Save_Load():
             "background_colour" : (0,0,0)
         }
 
-    def load_game_folder_collection(self):
+    def load_game_folder_collection(self) -> list[str]:
         folders_path = os.path.join(self.pref_path,"folder_collections.json")
         if os.path.exists(folders_path):
             with open(folders_path, "r") as folders_f:
@@ -133,7 +130,7 @@ class Save_Load():
         
         return colletion_list
 
-    def load_game_folders(self):
+    def load_game_folders(self) -> list[list[str]]:
         folders_path = os.path.join(self.pref_path,"folders.json")
         if os.path.exists(folders_path):
             with open(folders_path, "r") as folders_f:
@@ -141,11 +138,56 @@ class Save_Load():
 
         folders_list = []
         for collection in self.game_folder_collection:
-            folders_list += [folder.path for folder in os.scandir(collection) if os.path.isdir(folder.path)]
+            if f"{os.sep}Steam{os.sep}" in collection:
+                launcher = "Steam"
+            elif f"{os.sep}Epic Games{os.sep}" in collection:
+                launcher = "Epic"
+            else:
+                launcher = "unknown"
+            folders_list += [[folder.path,launcher] for folder in os.scandir(collection) if os.path.isdir(folder.path)]
 
         return folders_list
 
-    def find_wanted_exe(self,exe_list,root):
+    def f_w_e_logic(self,list:list[str],root:str) -> list[str]: #find wanted exe logic
+        new_useful_list = []
+        game_count = 0
+        for exe in list:
+            #add more stuff within this for loop, no need to loop over again
+            filename_lower = os.path.basename(exe).lower()
+            if filename_lower in self.IGNORE_EXACT or self.IGNORE_REGEX.match(filename_lower):
+                ... #don't add it to the new list, it isn't wanted
+            elif filename_lower in self.GAME_EXACT or self.is_main_exe(root,os.path.basename(exe)): #check if Game.exe or game name .exe
+                new_useful_list.append([exe,"game"])
+                game_count += 1
+            else:
+                new_useful_list.append([exe,"unknown"])
+            
+        match len(new_useful_list):
+            case 0:
+                ...
+            case 1:
+                return new_useful_list[0] #its probably what is wanted
+            case _:
+                biggest_size = 0
+                ind_to_use = 0
+                if game_count == 0:
+                    for i, exe in enumerate(new_useful_list):
+                        if os.path.getsize(root+os.sep+exe[0]) > biggest_size:
+                            biggest_size = os.path.getsize(root+os.sep+exe[0])
+                            ind_to_use = i
+                    return new_useful_list[ind_to_use]
+                if game_count == 1:
+                    for exe in new_useful_list:
+                        if exe[1] == "game":
+                            return exe
+                for i,exe in enumerate(new_useful_list):
+                    if exe[1] == "game" and os.path.getsize(root+os.sep+exe[0]) > biggest_size:
+                        biggest_size = os.path.getsize(root+os.sep+exe[0])
+                        ind_to_use = i
+                new_useful_list[ind_to_use][1] = "unknown"
+                return new_useful_list[ind_to_use]
+    
+    def find_wanted_exe(self,exe_list:list[str],root:str) -> list[str]:
         close_exe_list = [] #close to the root
         for f in exe_list:
             num_sep = f.count(os.sep)
@@ -158,68 +200,32 @@ class Save_Load():
                     close_exe_list.append(f)
         
         if len(close_exe_list) != 0:
-            new_useful_list = []
-            for exe in close_exe_list:
-                #add more stuff within this for loop, no need to loop over again
-                filename_lower = os.path.basename(exe).lower()
-                if exe in self.IGNORE_EXACT or self.IGNORE_REGEX.match(filename_lower):
-                    ... #don't add it to the new list, it isn't wanted
-                elif exe in self.LAUNCHER_EXACT or self.LAUNCHER_REGEX.match(filename_lower): # check if a launceher 
-                    new_useful_list.append((exe,"launcher"))
-                elif exe in self.GAME_EXACT or self.is_main_exe(root,filename_lower): #check if Game.exe or game name .exe
-                    new_useful_list.append((exe,"game"))
-                else:
-                    new_useful_list.append((exe,"unknown"))
-                
-            match len(new_useful_list):
-                case 0:
-                    ...
-                case 1:
-                    return new_useful_list #its probably what is wanted
-                case _:
-                    #check if there are elements where index 1 is "game"
-                    #if there is only one then return that unless it requires a launcher.
-                    #if there is only a launcher use that.
-                    #if unknown then return the exe and have later when I display which exes can be run
-                    #display to check the file path is correct and don't allow it to run until confirmed
-                    ...
-                    
-        
-        #close_exe_list was or became empty. Check to see if one of the strings in exe_list is named Game.exe
-        #or if it is named launcher or if the name is either the same or an abbreviation of the root folder name
-        # e.g. .../P3R/P3R/Binaries/Win64/P3R.exe (the 1st P3R the root)
+            return self.f_w_e_logic(close_exe_list,root)
+        return self.f_w_e_logic(exe_list,root)
 
-
-
-    def load_individual_executables(self):
+    def load_individual_executables(self) -> list[list[str]]:
         exe_path = os.path.join(self.pref_path,"executables.json")
         if os.path.exists(exe_path):
             with open(exe_path) as exe_f:
                 return json.load(exe_f)
         
         exe_list = []
-        for folder in self.game_folders:
+        for folder,launcher in self.game_folders:
             all_exe_in_folder = glob.glob(f"**{os.sep}*.exe",root_dir=folder,recursive=True)
             if len(all_exe_in_folder) == 0:
                 continue
-            # print(all_exe_in_folder)
-
             
-            #then find the exe to use out of the ones found from the glob.glob list
-            #the exe will probably be named the same as the root folder or Game
-            #if there is a launcher then probably use that exe
-            #remove UnityCrashHandler64.exe
-            #remove any uninstaller exe
-            #start_protected_game.exe (easy anti cheat)
-            #CrashReportClient.exe (unreal engine)
-            #remove any with setup in name
-            #honestly probably just remove all past the root dir if there is a exe in the root dir
+            wanted_exe = self.find_wanted_exe(all_exe_in_folder,folder)
             
-
-            exe_list.append(folder + os.sep + all_exe_in_folder[0])
+            exe_list.append([folder + os.sep + wanted_exe[0],launcher,wanted_exe[1]])
+            #this should be in the form: full file path, launcher associated with exe, whether the exe is of unknown type or a game
 
         return exe_list
 
 
 ##### I am thinking of creating 2 different Files.py one for linux and this for windows
 #In the main file check the os at the start and depending on the os the import will be a diff file
+
+#To do here still. Add the saving (changing values of self.executables etc)
+#Change from using lists for executables etc to dictionaries. so executables would be changed from ->
+# list[list[str]] to dict[exe file path :list with launcher and unknown/game]
