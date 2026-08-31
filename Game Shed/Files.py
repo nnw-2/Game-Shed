@@ -262,12 +262,28 @@ class Save_Load():
             self.game_collections[collection_name][what_to_change].remove(removed_data)
             self.executables[removed_data]["collections"].remove(collection_name)
 
-    def update_folders(self,added_exe,removed_exe):
+    def update_folders(self,folder,added_data=None,removed_data=None,what_to_change="exes",updating_folder=False):
         self.game_folders:dict[str,list[str]]
-
+        if added_data == None and removed_data == None:
+            return
+        if what_to_change == "folders":
+            if updating_folder:
+                self.game_folders[folder] = self.game_folders.pop(removed_data)
+                return
+            if added_data:
+                self.game_folders[folder] = []
+            if removed_data:
+                self.game_folders.pop(folder)
+            return
+        if added_data != None:
+            self.game_folders[folder].append(added_data)
+            self.executables[added_data]["folder"] = folder
+        if removed_data != None:
+            self.game_folders[folder].remove(removed_data)
+            self.executables[removed_data]["folder"] = ""
 
     def update_exes(self):
-        self.executables
+        self.executables:dict[str,dict[str,list[str]|str]]
 
 
 ##### I am thinking of creating 2 different Files.py one for linux and this for windows
@@ -293,3 +309,5 @@ class Save_Load():
 #function to update values in the dict and pass in steam epic etc once confirming the file paths exist
 
 #doing it through an update function would remove the problem of the exe losing information of which collection it should be attatched to 
+
+#eventually i might want to let the user move the location of an exe and have it work still by retaining the working directory given to the exe
