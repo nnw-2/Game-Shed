@@ -49,7 +49,7 @@ class Save_Load():
         self.pref_path = pygame.system.get_pref_path("nnw-2","Game Shed")
         self.os = system()
         self.settings = self.load_settings()
-        self.game_folder_collection = self.load_game_folder_collection()
+        self.game_collections = self.load_game_collections()
         self.game_folders = self.load_game_folders()
         self.executables = self.load_individual_executables()
 
@@ -85,7 +85,7 @@ class Save_Load():
         
         save_options = (
             (os.path.join(self.pref_path,"settings.json"),self.settings),
-            (os.path.join(self.pref_path,"folder_collections.json"),self.game_folder_collection),
+            (os.path.join(self.pref_path,"folder_collections.json"),self.game_collections),
             (os.path.join(self.pref_path,"folders.json"),self.game_folders)
         )
 
@@ -109,7 +109,7 @@ class Save_Load():
             "background_colour" : (0,0,0)
         }
 
-    def load_game_folder_collection(self) -> list[str]:
+    def load_game_collections(self) -> dict[str,dict[str,str|list[str]|None]]:
         folders_path = os.path.join(self.pref_path,"folder_collections.json")
         if os.path.exists(folders_path):
             with open(folders_path, "r") as folders_f:
@@ -117,18 +117,24 @@ class Save_Load():
                 #the user could of deleted some folders
                 return json.load(folders_f)
 
-        colletion_list = []
+#         colletion_list = []
 
+#         if self.os == "Windows":
+#             if os.path.exists(r"C:\Program Files (x86)\Steam\steamapps\common"):
+#                 colletion_list.append(r"C:\Program Files (x86)\Steam\steamapps\common")
+#         elif self.os == "Linux":
+#             if os.path.exists(os.path.expanduser("~/.local/share/Steam/steamapps/common")):
+#                 colletion_list.append(os.path.expanduser("~/.local/share/Steam/steamapps/common"))
+#             elif os.path.exists(os.path.expanduser("~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common")):
+#                 colletion_list.append(os.path.expanduser("~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"))
+        
+# # {collection_name : [collection path , [exes] ] }
+#         return colletion_list
+        collections = {"All" : {"path":None,"exes":[]}}
         if self.os == "Windows":
             if os.path.exists(r"C:\Program Files (x86)\Steam\steamapps\common"):
-                colletion_list.append(r"C:\Program Files (x86)\Steam\steamapps\common")
-        elif self.os == "Linux":
-            if os.path.exists(os.path.expanduser("~/.local/share/Steam/steamapps/common")):
-                colletion_list.append(os.path.expanduser("~/.local/share/Steam/steamapps/common"))
-            elif os.path.exists(os.path.expanduser("~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common")):
-                colletion_list.append(os.path.expanduser("~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"))
-        
-        return colletion_list
+                collections["Steam"] = {"path":r"C:\Program Files (x86)\Steam\steamapps\common","exes":[]}
+        return collections
 
     def load_game_folders(self) -> list[list[str]]:
         folders_path = os.path.join(self.pref_path,"folders.json")
@@ -137,14 +143,23 @@ class Save_Load():
                 return json.load(folders_f)
 
         folders_list = []
-        for collection in self.game_folder_collection:
-            if f"{os.sep}Steam{os.sep}" in collection:
-                launcher = "Steam"
-            elif f"{os.sep}Epic Games{os.sep}" in collection:
-                launcher = "Epic"
-            else:
-                launcher = "unknown"
-            folders_list += [[folder.path,launcher] for folder in os.scandir(collection) if os.path.isdir(folder.path)]
+        # for collection in self.game_collections:
+        #     if f"{os.sep}Steam{os.sep}" in collection:
+        #         launcher = "Steam"
+        #     elif f"{os.sep}Epic Games{os.sep}" in collection:
+        #         launcher = "Epic"
+        #     else:
+        #         launcher = "unknown"
+        #     folders_list += [[folder.path,launcher] for folder in os.scandir(collection) if os.path.isdir(folder.path)]
+        for collection_name,collection_values in self.game_collections.items():
+            if collection_values["path"] != None:
+                if f"{os.sep}Steam{os.sep}" in collection_values["path"]:
+                    launcher = "Steam"
+                elif f"{os.sep}Epic Games{os.sep}" in collection_values["path"]:
+                    launcher = "Epic"
+                else:
+                    launcher = "unknown"
+                
 
         return folders_list
 
@@ -222,10 +237,59 @@ class Save_Load():
 
         return exe_list
 
+    def update_collections(self,collection_name,added_data=None,removed_data=None,what_to_change="exes",update_collection_name=False):
+        self.game_collections:dict[str,dict]
+        
+        if added_data == None and removed_data == None:
+            return
+        if what_to_change == "collections":
+            # change the keys of the initial dict
+            if update_collection_name:
+                ... #if true then before removing add data to the new collection name
+
+        if what_to_change == "path":
+            self.game_collections[collection_name][what_to_change] = added_data
+            #more stuff needs to be added here ltr
+            #if changing to none then shouldn't need to do anything
+            #if changing from None or to a different path then should prompt the user
+            #if they want to keep the exes already in the collection or clear them
+            #it should then add exes to the collection based on the given path
+            return
+        if added_data != None:
+            self.game_collections[collection_name][what_to_change].append(added_data)
+            self.executables[added_data]["collections"].append(collection_name)
+        if removed_data != None:
+            self.game_collections[collection_name][what_to_change].remove(removed_data)
+            self.executables[removed_data]["collections"].remove(collection_name)
+
+    def update_folders(self,added_exe,removed_exe):
+        self.game_folders:dict[str,list[str]]
+
+
+    def update_exes(self):
+        self.executables
+
 
 ##### I am thinking of creating 2 different Files.py one for linux and this for windows
 #In the main file check the os at the start and depending on the os the import will be a diff file
 
 #To do here still. Add the saving (changing values of self.executables etc)
-#Change from using lists for executables etc to dictionaries. so executables would be changed from ->
-# list[list[str]] to dict[exe file path :list with launcher and unknown/game]
+
+
+# {collection_name : [collection path , [exes] ] }
+#there will be 2 types of colletions, one with collection path = None and the other with a path
+# if None then that collection has not got associated folders to collect for their exes, it is just a
+#collection in the sense that exes not found together will be grouped by the user here (user made collection only and the All collection)
+
+# {exe : [ [associated collections] , launcher , unknown/game , image to display like icon file ? , folder]}
+
+# {folder_path : [exes]} 
+# folder identifier can just be the basename of the folder path
+#potential issue with folder_id being the basename -> multiple folders sharing the same basename so use path as id
+#but still store basename? ig
+
+
+#make the finding files and folders different separate functions and in the loads just call a
+#function to update values in the dict and pass in steam epic etc once confirming the file paths exist
+
+#doing it through an update function would remove the problem of the exe losing information of which collection it should be attatched to 
