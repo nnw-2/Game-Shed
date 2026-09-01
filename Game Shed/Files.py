@@ -236,16 +236,26 @@ class Save_Load():
             #this should be in the form: full file path, launcher associated with exe, whether the exe is of unknown type or a game
 
         return exe_list
-
+    
     def update_collections(self,collection_name,added_data=None,removed_data=None,what_to_change="exes",update_collection_name=False):
         self.game_collections:dict[str,dict]
         
         if added_data == None and removed_data == None:
             return
         if what_to_change == "collections":
-            # change the keys of the initial dict
             if update_collection_name:
-                ... #if true then before removing add data to the new collection name
+                self.game_collections[collection_name] = self.game_collections.pop(removed_data)
+                for exe in self.game_collections[collection_name]["exes"]:
+                    self.executables[exe]["collections"].remove(removed_data)
+                    self.executables[exe]["collections"].append(collection_name)
+                return
+            if added_data:
+                self.game_collections[collection_name] =  {"path":None,"exes":[]} 
+                #if i want to add a collection with a path then do update_collections(what_to_change="collections") followed by update_collections(what_to_change="path")
+                #not both in the same function call
+            elif removed_data:
+                self.game_collections.pop(collection_name)
+            return
 
         if what_to_change == "path":
             self.game_collections[collection_name][what_to_change] = added_data
@@ -269,10 +279,12 @@ class Save_Load():
         if what_to_change == "folders":
             if updating_folder:
                 self.game_folders[folder] = self.game_folders.pop(removed_data)
+                for exe in self.game_folders[folder]:
+                    self.executables[exe]["folder"] = folder
                 return
             if added_data:
                 self.game_folders[folder] = []
-            if removed_data:
+            elif removed_data:
                 self.game_folders.pop(folder)
             return
         if added_data != None:
