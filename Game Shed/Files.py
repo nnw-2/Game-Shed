@@ -294,9 +294,44 @@ class Save_Load():
             self.game_folders[folder].remove(removed_data)
             self.executables[removed_data]["folder"] = ""
 
-    def update_exes(self):
+    def update_exes(self,exe,added_data=None,removed_data=None,what_to_change="exes",update_exe_path=False):
         self.executables:dict[str,dict[str,list[str]|str]]
-
+        if added_data == None and removed_data == None:
+            return
+        if what_to_change == "exes":
+            if update_exe_path:
+                self.executables[exe] = self.executables.pop(removed_data)
+                self.game_folders[self.executables[exe]["folder"]].remove(removed_data)
+                self.game_folders[self.executables[exe]["folder"]].append(exe)
+                for collection in self.executables[exe]["collections"]:
+                    self.game_collections[collection]["exes"].remove(removed_data)
+                    self.game_collections[collection]["exes"].append(exe)
+                return
+            if added_data:
+                self.executables[exe] = {"collections":[],"launcher":"unknown","type":"unknown","folder":""}
+            if removed_data:
+                self.executables.pop(removed_data)
+            return
+        if what_to_change == "collections":
+            self.executables[exe]["collections"].remove(removed_data)
+            self.executables[exe]["collections"].append(added_data)
+            self.game_collections[removed_data]["exes"].remove(exe)
+            self.game_collections[added_data]["exes"].append(exe)
+            return
+        if what_to_change == "launcher":
+            self.executables[exe]["launcher"] = added_data
+            return
+        if what_to_change == "type": #unknown/game
+            self.executables[exe]["type"] = added_data
+            return
+        if what_to_change == "folder":
+            if added_data != "":
+                self.game_folders[self.executables[exe]["folder"]].remove(exe)
+                self.game_folders[added_data].append(exe)
+            else:
+                self.game_folders[self.executables[exe]["folder"]].remove(exe)
+            self.executables[exe]["folder"] = added_data
+                
 
 ##### I am thinking of creating 2 different Files.py one for linux and this for windows
 #In the main file check the os at the start and depending on the os the import will be a diff file
