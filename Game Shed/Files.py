@@ -80,16 +80,18 @@ class Save_Load():
 
         return False
 
-    def save(self,settings=False,folder_collection=False,game_folders=False) -> None:
-        save_deciders = (settings,folder_collection,game_folders)
+    def save(self,settings=False,collections=False,game_folders=False,exes=False) -> None:
+        save_deciders = (settings,collections,game_folders,exes)
         
         save_options = (
             (os.path.join(self.pref_path,"settings.json"),self.settings),
-            (os.path.join(self.pref_path,"folder_collections.json"),self.game_collections),
-            (os.path.join(self.pref_path,"folders.json"),self.game_folders)
+            (os.path.join(self.pref_path,"collections.json"),self.game_collections),
+            (os.path.join(self.pref_path,"folders.json"),self.game_folders),
+            (os.path.join(self.pref_path,"executables.json"),self.executables)
+
         )
 
-        for i in range(3):
+        for i in range(4):
             if save_deciders[i]:
                 with open(save_options[i][0], "w") as f:
                     json.dump(save_options[i][1],f,indent=4)
@@ -110,7 +112,7 @@ class Save_Load():
         }
 
     def load_game_collections(self) -> dict[str,dict[str,str|list[str]|None]]:
-        folders_path = os.path.join(self.pref_path,"folder_collections.json")
+        folders_path = os.path.join(self.pref_path,"collections.json")
         if os.path.exists(folders_path):
             with open(folders_path, "r") as folders_f:
                 #before returning I should first check that all of the folders exist.
@@ -344,6 +346,5 @@ class Save_Load():
 
 #eventually i might want to let the user move the location of an exe and have it work still by retaining the working directory given to the exe
 test = Save_Load()
-print(test.game_collections)
-print(test.game_folders)
-print(test.executables)
+
+test.save(collections=True,game_folders=True,exes=True)
