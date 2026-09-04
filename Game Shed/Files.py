@@ -50,8 +50,8 @@ class Save_Load():
         self.os = system()
         self.settings = self.load_settings()
         self.game_collections = self.load_game_collections()
-        self.game_folders = self.load_game_folders()
         self.executables = self.load_individual_executables()
+        self.game_folders = self.load_game_folders()
 
     def is_main_exe(self,root:str,exe:str) -> bool:
         #compare the root folder name to the passed in exe 
@@ -117,8 +117,6 @@ class Save_Load():
                 #the user could of deleted some folders
                 return json.load(folders_f)
 
-#         colletion_list = []
-
 #         if self.os == "Windows":
 #             if os.path.exists(r"C:\Program Files (x86)\Steam\steamapps\common"):
 #                 colletion_list.append(r"C:\Program Files (x86)\Steam\steamapps\common")
@@ -128,13 +126,12 @@ class Save_Load():
 #             elif os.path.exists(os.path.expanduser("~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common")):
 #                 colletion_list.append(os.path.expanduser("~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common"))
         
-# # {collection_name : [collection path , [exes] ] }
-#         return colletion_list
-        collections = {"All" : {"path":None,"exes":[]}}
+        self.game_collections = {"All" : {"path":None,"exes":[]}}
         if self.os == "Windows":
             if os.path.exists(r"C:\Program Files (x86)\Steam\steamapps\common"):
-                collections["Steam"] = {"path":r"C:\Program Files (x86)\Steam\steamapps\common","exes":[]}
-        return collections
+                self.game_collections["Steam"] = {"path":r"C:\Program Files (x86)\Steam\steamapps\common","exes":[]}
+            
+        return self.game_collections
 
     def load_game_folders(self) -> list[list[str]]:
         folders_path = os.path.join(self.pref_path,"folders.json")
@@ -142,26 +139,26 @@ class Save_Load():
             with open(folders_path, "r") as folders_f:
                 return json.load(folders_f)
 
-        folders_list = []
-        # for collection in self.game_collections:
-        #     if f"{os.sep}Steam{os.sep}" in collection:
-        #         launcher = "Steam"
-        #     elif f"{os.sep}Epic Games{os.sep}" in collection:
-        #         launcher = "Epic"
-        #     else:
-        #         launcher = "unknown"
-        #     folders_list += [[folder.path,launcher] for folder in os.scandir(collection) if os.path.isdir(folder.path)]
+        self.game_folders = {}
+        
+        #don't need to use a deep copy in this case
         for collection_name,collection_values in self.game_collections.items():
-            if collection_values["path"] != None:
-                if f"{os.sep}Steam{os.sep}" in collection_values["path"]:
-                    launcher = "Steam"
-                elif f"{os.sep}Epic Games{os.sep}" in collection_values["path"]:
-                    launcher = "Epic"
-                else:
-                    launcher = "unknown"
-                
-
-        return folders_list
+            if collection_values["path"]  == None:
+                continue
+            
+            for folder in os.scandir(collection_values["path"]):
+                if os.path.isdir(folder.path):
+                    all_exe_in_folder = glob.glob(f"**{os.sep}*.exe",root_dir=folder.path,recursive=True)
+                    if len(all_exe_in_folder) == 0:
+                        continue
+                    exe,exe_type = self.find_wanted_exe(all_exe_in_folder,folder.path)
+                    full_exe_path = folder.path + os.sep + exe
+                    self.game_folders[folder.path] = [full_exe_path]
+                    #The collections available on first run should be launchers so this is ok
+                    self.executables[full_exe_path] = {"collections":["All",collection_name],"launcher":collection_name,"type":exe_type,"folder":folder.path}
+                    self.game_collections["All"]["exes"].append(full_exe_path)
+                    self.game_collections[collection_name]["exes"].append(full_exe_path)
+        return self.game_folders
 
     def f_w_e_logic(self,list:list[str],root:str) -> list[str]: #find wanted exe logic
         new_useful_list = []
@@ -223,19 +220,7 @@ class Save_Load():
         if os.path.exists(exe_path):
             with open(exe_path) as exe_f:
                 return json.load(exe_f)
-        
-        exe_list = []
-        for folder,launcher in self.game_folders:
-            all_exe_in_folder = glob.glob(f"**{os.sep}*.exe",root_dir=folder,recursive=True)
-            if len(all_exe_in_folder) == 0:
-                continue
-            
-            wanted_exe = self.find_wanted_exe(all_exe_in_folder,folder)
-            
-            exe_list.append([folder + os.sep + wanted_exe[0],launcher,wanted_exe[1]])
-            #this should be in the form: full file path, launcher associated with exe, whether the exe is of unknown type or a game
-
-        return exe_list
+        return {}
     
     def update_collections(self,collection_name,added_data=None,removed_data=None,what_to_change="exes",update_collection_name=False):
         self.game_collections:dict[str,dict]
@@ -331,7 +316,7 @@ class Save_Load():
             else:
                 self.game_folders[self.executables[exe]["folder"]].remove(exe)
             self.executables[exe]["folder"] = added_data
-                
+          
 
 ##### I am thinking of creating 2 different Files.py one for linux and this for windows
 #In the main file check the os at the start and depending on the os the import will be a diff file
@@ -358,3 +343,7 @@ class Save_Load():
 #doing it through an update function would remove the problem of the exe losing information of which collection it should be attatched to 
 
 #eventually i might want to let the user move the location of an exe and have it work still by retaining the working directory given to the exe
+test = Save_Load()
+print(test.game_collections)
+print(test.game_folders)
+print(test.executables)
