@@ -88,7 +88,6 @@ class Save_Load():
             (os.path.join(self.pref_path,"collections.json"),self.game_collections),
             (os.path.join(self.pref_path,"folders.json"),self.game_folders),
             (os.path.join(self.pref_path,"executables.json"),self.executables)
-
         )
 
         for i in range(4):
@@ -135,7 +134,7 @@ class Save_Load():
             
         return self.game_collections
 
-    def load_game_folders(self) -> list[list[str]]:
+    def load_game_folders(self) -> dict[str,list[str]]:
         folders_path = os.path.join(self.pref_path,"folders.json")
         if os.path.exists(folders_path):
             with open(folders_path, "r") as folders_f:
@@ -177,8 +176,6 @@ class Save_Load():
                 new_useful_list.append([exe,"unknown"])
             
         match len(new_useful_list):
-            case 0:
-                ...
             case 1:
                 return new_useful_list[0] #its probably what is wanted
             case _:
@@ -217,7 +214,7 @@ class Save_Load():
             return self.f_w_e_logic(close_exe_list,root)
         return self.f_w_e_logic(exe_list,root)
 
-    def load_individual_executables(self) -> list[list[str]]:
+    def load_individual_executables(self) -> dict:
         exe_path = os.path.join(self.pref_path,"executables.json")
         if os.path.exists(exe_path):
             with open(exe_path) as exe_f:
@@ -322,27 +319,6 @@ class Save_Load():
 
 ##### I am thinking of creating 2 different Files.py one for linux and this for windows
 #In the main file check the os at the start and depending on the os the import will be a diff file
-
-#To do here still. Add the saving (changing values of self.executables etc)
-
-
-# {collection_name : [collection path , [exes] ] }
-#there will be 2 types of colletions, one with collection path = None and the other with a path
-# if None then that collection has not got associated folders to collect for their exes, it is just a
-#collection in the sense that exes not found together will be grouped by the user here (user made collection only and the All collection)
-
-# {exe : [ [associated collections] , launcher , unknown/game , image to display like icon file ? , folder]}
-
-# {folder_path : [exes]} 
-# folder identifier can just be the basename of the folder path
-#potential issue with folder_id being the basename -> multiple folders sharing the same basename so use path as id
-#but still store basename? ig
-
-
-#make the finding files and folders different separate functions and in the loads just call a
-#function to update values in the dict and pass in steam epic etc once confirming the file paths exist
-
-#doing it through an update function would remove the problem of the exe losing information of which collection it should be attatched to 
 
 #eventually i might want to let the user move the location of an exe and have it work still by retaining the working directory given to the exe
 test = Save_Load()
