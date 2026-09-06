@@ -22,6 +22,15 @@ class Game_Shed():
         self.icon_colour = FILES.settings["icon_colour"]
         self.background_colour = FILES.settings["background_colour"]
 
+        self.ordered_collection_list = sorted(FILES.game_collections.keys(),key=str.lower)
+        self.ordered_exe_list = sorted(FILES.executables.keys(),key=str.lower)
+        #I want to dynamically add and remove the things in these lists to a group and that group gets displayed.
+        #based on the dimensions of the window and the length of the lists above should determine how much 
+        #through the list to move based on the position of the scroll bar
+
+        #how large each thing will be so I know how to calc this:
+        #I should first make all of the other ui.
+
         self.w , self.h = pygame.display.get_desktop_sizes()[0]
         self.w = int(self.w * 0.5)
         self.h = int(self.h * 0.5)
@@ -36,6 +45,10 @@ class Game_Shed():
         self.y_scaler = self.h/1080
         UI.x_scale = self.x_scaler
         UI.y_scale = self.y_scaler
+
+        self.Collection_Group = pygame.sprite.Group()
+        self.Exe_Group = pygame.sprite.Group()
+
         self.Lines1 = pygame.sprite.Group()
         self.Images1 = pygame.sprite.Group()
         self.Const_Colour_Imgs = pygame.sprite.Group()
@@ -45,25 +58,21 @@ class Game_Shed():
         #the smaller higher opacity line will change size depending on how many games or things there are (if more then line smaller)
         self.Scroll_Bar_Lines1 = pygame.sprite.Group() # scroll bar for menu on left
         self.Scroll_Bar_Lines2 = pygame.sprite.Group() # scroll bar for the games
-        
-        #implement a group for the games and the file management stuff.
-        #when scrolling through determine if something should/shouldn't be rendered based on height on screen
-        #for all of the elements in the sprite group check their position and if they are in wanted range add them to a temp
-        #sprite group and render that temp sprite group, for all the sprites in the main group when scrolling update their positions
-        #but only render the ones in the temp sprite group
 
         Lines(self.line_colour,(1920,7),(0,120),self.Lines1)
         Lines(self.line_colour,(7,960),(180,120),self.Lines1)
+
+        Lines(self.line_colour,(170,50),(0,140),self.Lines1)#collections group testing for size wanted
 
         Colour_Changing_Images(os.path.join(BASE_PATH,"Images","cog.png"),self.icon_colour,(50,50),(20,20),self.Images1,self.Colour_Changing_Imgs)
         Colour_Changing_Images(os.path.join(BASE_PATH,"Images","icon.png"),self.icon_colour,(100,100),(500,500),self.Images1,self.Colour_Changing_Imgs) # this one is just for testing
         
         Images(os.path.join(BASE_PATH,"Images","icon.png"),(100,100),(700,700),self.Images1,self.Const_Colour_Imgs)
 
-        Lines_Alpha(self.line_colour,100,(7,953),(166,127),self.Scroll_Bar_Lines1)
-        Lines_Alpha(self.line_colour,120,(7,93),(166,127),self.Scroll_Bar_Lines1)
+        Lines_Alpha(self.line_colour,100,(7,954),(174,127),self.Scroll_Bar_Lines1)
+        Lines_Alpha(self.line_colour,120,(7,93),(174,127),self.Scroll_Bar_Lines1)
 
-        Lines_Alpha(self.line_colour,100,(7,953),(1900,127),self.Scroll_Bar_Lines2)
+        Lines_Alpha(self.line_colour,100,(7,954),(1900,127),self.Scroll_Bar_Lines2)
         Lines_Alpha(self.line_colour,120,(7,93),(1900,127),self.Scroll_Bar_Lines2)
 
     def quit_func(self,event):

@@ -321,6 +321,6 @@ class Save_Load():
 #In the main file check the os at the start and depending on the os the import will be a diff file
 
 #eventually i might want to let the user move the location of an exe and have it work still by retaining the working directory given to the exe
-test = Save_Load()
+# test = Save_Load()
 
-test.save(collections=True,game_folders=True,exes=True)
+# test.save(collections=True,game_folders=True,exes=True)
