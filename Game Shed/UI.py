@@ -95,3 +95,13 @@ class Colour_Changing_Images(Images):
         scaled_white_image = pygame.transform.smoothscale(self.initial_image, self.image.get_size())
         self.image.fill((colour[0], colour[1], colour[2], 255))
         self.image.blit(scaled_white_image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
+class Collections(UI):
+    def __init__(self,template:pygame.Surface,collection_name,destination,*sprite_groups) -> None:
+        super().__init__(template.get_size(),destination,*sprite_groups)
+        self.name = collection_name
+        text = ... #text to display, cut off collection name if too long
+        self.image = template.copy() #text on top of template
+        self.image.blit(pygame.font.Font(None,100).render(collection_name,True,(0,0,0)))
+        self.rect = self.image.get_rect(topleft=destination)
+    
