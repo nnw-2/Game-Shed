@@ -97,11 +97,27 @@ class Colour_Changing_Images(Images):
         self.image.blit(scaled_white_image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
 class Collections(UI):
-    def __init__(self,template:pygame.Surface,collection_name,destination,*sprite_groups) -> None:
+    elipsis_surf = pygame.font.Font(None,50).render("...",True,(0,0,0))
+    def __init__(self,template:pygame.Surface,collection_name:str,destination:tuple,*sprite_groups) -> None:
         super().__init__(template.get_size(),destination,*sprite_groups)
         self.name = collection_name
-        text = ... #text to display, cut off collection name if too long
-        self.image = template.copy() #text on top of template
-        self.image.blit(pygame.font.Font(None,100).render(collection_name,True,(0,0,0)))
+        self.text = pygame.font.Font(None,50).render(collection_name,True,(0,0,0))
+        self.image = template.copy()
+        #here if the text will spill over the wanted area cut it short then add ...
+        text_size = self.text.get_size()
+        if text_size[0] > 150:
+            self.image.blit(self.text,(10,10),(0,0,125,30))
+            self.image.blit(Collections.elipsis_surf,(135,10))
+        else:
+            self.image.blit(self.text,(10,10))
+
+        self.image_original = self.image.copy()
         self.rect = self.image.get_rect(topleft=destination)
+        self.change_size()
+        self.change_dest()
+
+    def change_size(self):
+        self.image = pygame.transform.smoothscale(self.image_original,(int(self.initial_size[0] * UI.x_scale),
+                                                                       int(self.initial_size[1] * UI.y_scale))).convert_alpha()
+        self.rect.size = self.image.get_size()
     

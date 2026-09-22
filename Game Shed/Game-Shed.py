@@ -1,12 +1,11 @@
 import pygame
+pygame.init() #moved here for elipsis_surf in UI to not cause error
 from pygame.constants import QUIT,K_F11,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED , K_a , K_d
 from sys import exit
 from UI import UI,Lines,Lines_Alpha,Images,Colour_Changing_Images,Collections
 import os
 import json
 from Files import Save_Load
-
-pygame.init()
 
 EVENTS_LIST = [QUIT,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED]
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -86,7 +85,7 @@ class Game_Shed():
         # Lines_Alpha(self.line_colour,120,(170,50),(10,200),self.Lines1)
 
         #testing Collections class in UI
-        Collections(self.collection_template,"hello",(300,300),self.Lines1)
+        Collections(self.collection_template,"hello world",(10,140),self.Lines1)
 
     def quit_func(self,event):
         self.win_actual.destroy()
