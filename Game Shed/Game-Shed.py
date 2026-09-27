@@ -21,24 +21,6 @@ class Game_Shed():
         self.icon_colour = FILES.settings["icon_colour"]
         self.background_colour = FILES.settings["background_colour"]
 
-        self.ordered_collection_list = sorted(FILES.game_collections.keys(),key=str.lower)
-        self.ordered_exe_list = sorted(FILES.executables.keys(),key=str.lower)
-        self.collection_template = pygame.surface.Surface((170,50))
-        self.collection_template.fill(self.line_colour)
-        self.collection_template.set_alpha(120)
-
-        self.collection_slice_start = 0
-        self.collection_slice_end = 16 if len(self.ordered_collection_list) >= 16 else len(self.ordered_collection_list) #noramlly be slice start + ... but since i know its 0 do this
-        self.collection_slice_objects = self.ordered_collection_list[0:self.collection_slice_end]
-        #I want to dynamically add and remove the things in these lists to a group and that group gets displayed.
-        #based on the dimensions of the window and the length of the lists above should determine how much 
-        #through the list to move based on the position of the scroll bar
-
-        #how large each thing will be so I know how to calc this:
-        #170 , 50 with a gap of 10 inbetween, starts at 140, 20 gap at the bottom of window
-        #1920 1080 window collections between 140 and 1060   15.3 can fit so 16 collections at a time (only part of one at bottom)
-
-
         self.w , self.h = pygame.display.get_desktop_sizes()[0]
         self.w = int(self.w * 0.5)
         self.h = int(self.h * 0.5)
@@ -54,8 +36,26 @@ class Game_Shed():
         UI.x_scale = self.x_scaler
         UI.y_scale = self.y_scaler
 
-        # self.Collection_Group = pygame.sprite.Group().add(self.collection_slice_objects)
+        self.Collection_Group = pygame.sprite.Group()
         self.Exe_Group = pygame.sprite.Group()
+
+        self.ordered_collection_list = sorted(FILES.game_collections.keys(),key=str.lower)
+        self.ordered_exe_list = sorted(FILES.executables.keys(),key=str.lower)
+        self.collection_template = pygame.surface.Surface((170,50))
+        self.collection_template.fill(self.line_colour)
+        self.collection_template.set_alpha(120)
+
+        self.collection_slice_start = 0
+        self.collection_slice_end = 16 if len(self.ordered_collection_list) >= 16 else len(self.ordered_collection_list) #noramlly be slice start + ... but since i know its 0 do this
+        self.collection_slice_objects:list[Collections] = []
+        self.add_collection_slice_objects(self.ordered_collection_list[0:self.collection_slice_end])
+        #I want to dynamically add and remove the things in these lists to a group and that group gets displayed.
+        #based on the dimensions of the window and the length of the lists above should determine how much 
+        #through the list to move based on the position of the scroll bar
+
+        #how large each thing will be so I know how to calc this:
+        #170 , 50 with a gap of 10 inbetween, starts at 140, 20 gap at the bottom of window
+        #1920 1080 window collections between 140 and 1060   15.3 can fit so 16 collections at a time (only part of one at bottom)
         
         self.Lines1 = pygame.sprite.Group()
         self.Images1 = pygame.sprite.Group()
@@ -81,11 +81,13 @@ class Game_Shed():
         Lines_Alpha(self.line_colour,100,(10,954),(1911,127),self.Scroll_Bar_Lines2)
         Lines_Alpha(self.line_colour,120,(10,93),(1911,127),self.Scroll_Bar_Lines2)
 
-        # Lines_Alpha(self.line_colour,120,(170,50),(10,140),self.Lines1) #the dimensions and rgba for collection group
-        # Lines_Alpha(self.line_colour,120,(170,50),(10,200),self.Lines1)
-
-        #testing Collections class in UI
-        Collections(self.collection_template,"hello world",(10,140),self.Lines1)
+    def add_collection_slice_objects(self,collection_names:list[str]|str):
+        if type(collection_names) == list:
+            for i in range(len(collection_names)):
+                shift = 60 * i
+                self.collection_slice_objects.append(Collections(self.collection_template,collection_names[i],(10,140+shift),self.Collection_Group))
+        else:
+            self.collection_slice_objects.append(Collections(self.collection_template,collection_names,(10,self.collection_slice_objects[-1].rect.topleft[1] +60),self.Collection_Group))
 
     def quit_func(self,event):
         self.win_actual.destroy()
@@ -105,6 +107,7 @@ class Game_Shed():
         self.Images1.update(window_changed_size=True)
         self.Scroll_Bar_Lines1.update(window_changed_size=True)
         self.Scroll_Bar_Lines2.update(window_changed_size=True)
+        self.Collection_Group.update(window_changed_size=True)
 
         self.render()
 
@@ -122,6 +125,7 @@ class Game_Shed():
         self.Images1.draw(self.win)
         self.Scroll_Bar_Lines1.draw(self.win)
         self.Scroll_Bar_Lines2.draw(self.win)
+        self.Collection_Group.draw(self.win)
         self.win_actual.flip()
 
     event_funcs = {
@@ -159,6 +163,9 @@ class Game_Shed():
                 
                 self.Lines1.update(window_changed_size=True)
                 self.Images1.update(window_changed_size=True)
+                self.Scroll_Bar_Lines1.update(window_changed_size=True)
+                self.Scroll_Bar_Lines2.update(window_changed_size=True)
+                self.Collection_Group.update(window_changed_size=True)
                 self.render()
             if pygame.key.get_just_released()[K_a]:
                 self.Colour_Changing_Imgs.update(colour_change=(0,0,255))
