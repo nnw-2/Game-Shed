@@ -1,13 +1,13 @@
 import pygame
 pygame.init() #moved here for elipsis_surf in UI to not cause error
-from pygame.constants import QUIT,K_F11,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED , K_a , K_d
+from pygame.constants import QUIT,K_F11,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED,MOUSEMOTION , K_a , K_d
 from sys import exit
 from UI import UI,Lines,Lines_Alpha,Images,Colour_Changing_Images,Collections
 import os
 import json
 from Files import Save_Load
 
-EVENTS_LIST = [QUIT,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED]
+EVENTS_LIST = [QUIT,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED,MOUSEMOTION]
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 pygame.event.set_blocked(None)
@@ -68,18 +68,20 @@ class Game_Shed():
         self.Scroll_Bar_Lines2 = pygame.sprite.Group() # scroll bar for the games
 
         Lines(self.line_colour,(1920,7),(0,120),self.Lines1)
-        Lines(self.line_colour,(7,960),(200,120),self.Lines1)
+        Lines(self.line_colour,(7,960),(205,120),self.Lines1)
 
         Colour_Changing_Images(os.path.join(BASE_PATH,"Images","cog.png"),self.icon_colour,(50,50),(20,33),self.Images1,self.Colour_Changing_Imgs)
         Colour_Changing_Images(os.path.join(BASE_PATH,"Images","icon.png"),self.icon_colour,(100,100),(500,500),self.Images1,self.Colour_Changing_Imgs) # this one is just for testing
         
         Images(os.path.join(BASE_PATH,"Images","icon.png"),(100,100),(700,700),self.Images1,self.Const_Colour_Imgs)
 
-        Lines_Alpha(self.line_colour,100,(10,954),(192,127),self.Scroll_Bar_Lines1)
-        Lines_Alpha(self.line_colour,120,(10,93),(192,127),self.Scroll_Bar_Lines1)
+        Lines_Alpha(self.line_colour,100,(15,954),(192,127),self.Scroll_Bar_Lines1)
+        self.scroll_box = Lines_Alpha(self.line_colour,120,(15,93),(192,127),self.Scroll_Bar_Lines1)
+        self.already_in_scroll_box1 = False
 
-        Lines_Alpha(self.line_colour,100,(10,954),(1911,127),self.Scroll_Bar_Lines2)
-        Lines_Alpha(self.line_colour,120,(10,93),(1911,127),self.Scroll_Bar_Lines2)
+
+        Lines_Alpha(self.line_colour,100,(15,954),(1905,127),self.Scroll_Bar_Lines2)
+        Lines_Alpha(self.line_colour,120,(15,93),(1905,127),self.Scroll_Bar_Lines2)
 
     def add_collection_slice_objects(self,collection_names:list[str]|str):
         if type(collection_names) == list:
@@ -128,11 +130,30 @@ class Game_Shed():
         self.Collection_Group.draw(self.win)
         self.win_actual.flip()
 
+    def mouse_collision(self,event):
+        # print(event)
+        if self.scroll_box.rect.collidepoint(event.pos):
+            if not self.already_in_scroll_box1:
+                pygame.mouse.set_cursor(pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_HAND))
+                self.scroll_box.change_alpha(180) #120 default alpha
+                self.render()
+                self.already_in_scroll_box1 = True
+        elif self.already_in_scroll_box1:
+            pygame.mouse.set_cursor(pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_ARROW))
+            self.scroll_box.change_alpha(120)
+            self.render()
+            self.already_in_scroll_box1 = False
+        # event.buttons[0] will be 1 if left click is held down while mouse is moving
+        # I want to keep track of if left clicked the scroll box and have held mouse since.
+        # I can't confirm that from just mousemotion event I also need mouse button events
+        # as it will stay as 1 if I let go while not moving mouse then re click and drag again which it shouldn't 
+
     event_funcs = {
         QUIT : quit_func,
         VIDEORESIZE : win_size_change_func,
         WINDOWFOCUSLOST : focus_lost_func,
-        WINDOWFOCUSGAINED : focus_gained_func
+        WINDOWFOCUSGAINED : focus_gained_func,
+        MOUSEMOTION : mouse_collision
     }
 
     def main(self):
