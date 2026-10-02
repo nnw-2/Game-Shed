@@ -15,6 +15,9 @@ class UI(pygame.sprite.Sprite):
     def change_dest(self):
         self.rect.topleft = (int(self.initial_dest[0] * UI.x_scale),
                              int(self.initial_dest[1] * UI.y_scale))
+
+    def change_initial_dest_y(self,y):
+        self.initial_dest = (self.initial_dest[0],y)
     
     def change_size(self):
         ...
@@ -33,6 +36,9 @@ class UI(pygame.sprite.Sprite):
             self.change_colour(kwargs.get("colour_change"))
         if kwargs.get("alpha_change", False):
             self.change_alpha(kwargs.get("alpha_change"))
+        if kwargs.get("dest_change", False):
+            self.change_initial_dest_y(kwargs.get("dest_change_y"))
+            self.change_dest()
 
 class Lines(UI):
     def __init__(self,colour:tuple[int,int,int], initial_size:tuple[int,int], destination:tuple[int,int], *sprite_groups):

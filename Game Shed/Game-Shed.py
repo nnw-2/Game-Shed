@@ -1,13 +1,13 @@
 import pygame
 pygame.init() #moved here for elipsis_surf in UI to not cause error
-from pygame.constants import QUIT,K_F11,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED,MOUSEMOTION , K_a , K_d
+from pygame.constants import QUIT,K_F11,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED,MOUSEMOTION,MOUSEBUTTONDOWN,MOUSEBUTTONUP , K_a , K_d
 from sys import exit
 from UI import UI,Lines,Lines_Alpha,Images,Colour_Changing_Images,Collections
 import os
 import json
 from Files import Save_Load
 
-EVENTS_LIST = [QUIT,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED,MOUSEMOTION]
+EVENTS_LIST = [QUIT,VIDEORESIZE,WINDOWFOCUSLOST,WINDOWFOCUSGAINED,MOUSEMOTION,MOUSEBUTTONDOWN,MOUSEBUTTONUP]
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 pygame.event.set_blocked(None)
@@ -35,6 +35,8 @@ class Game_Shed():
         self.y_scaler = self.h/1080
         UI.x_scale = self.x_scaler
         UI.y_scale = self.y_scaler
+
+        self.is_left_click_down = False
 
         self.Collection_Group = pygame.sprite.Group()
         self.Exe_Group = pygame.sprite.Group()
@@ -130,6 +132,22 @@ class Game_Shed():
         self.Collection_Group.draw(self.win)
         self.win_actual.flip()
 
+    def mouse_button_up_func(self,event):
+        # print(event)
+        if event.button == 1:
+            self.is_left_click_down = False
+
+    def mouse_button_down_func(self,event):
+        # print(event)
+        if event.button == 1:
+            self.is_left_click_down = True
+
+    def moving_scroll_bar(self,y_change):
+        self.scroll_box.change_initial_dest_y(y_change)
+        self.scroll_box.change_dest()
+        self.render()
+
+    #as scrolling counts as mouse button up/down events do that part of the collision in the above funcs
     def mouse_collision(self,event):
         # print(event)
         if self.scroll_box.rect.collidepoint(event.pos):
@@ -138,11 +156,17 @@ class Game_Shed():
                 self.scroll_box.change_alpha(180) #120 default alpha
                 self.render()
                 self.already_in_scroll_box1 = True
+            if self.is_left_click_down:
+                self.moving_scroll_bar(event.pos[1] / self.y_scaler)
         elif self.already_in_scroll_box1:
-            pygame.mouse.set_cursor(pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_ARROW))
-            self.scroll_box.change_alpha(120)
-            self.render()
-            self.already_in_scroll_box1 = False
+            if not self.is_left_click_down:
+                pygame.mouse.set_cursor(pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_ARROW))
+                self.scroll_box.change_alpha(120)
+                self.render()
+                self.already_in_scroll_box1 = False
+            else:
+                self.moving_scroll_bar(event.pos[1] / self.y_scaler)
+
         # event.buttons[0] will be 1 if left click is held down while mouse is moving
         # I want to keep track of if left clicked the scroll box and have held mouse since.
         # I can't confirm that from just mousemotion event I also need mouse button events
@@ -153,7 +177,9 @@ class Game_Shed():
         VIDEORESIZE : win_size_change_func,
         WINDOWFOCUSLOST : focus_lost_func,
         WINDOWFOCUSGAINED : focus_gained_func,
-        MOUSEMOTION : mouse_collision
+        MOUSEMOTION : mouse_collision,
+        MOUSEBUTTONUP : mouse_button_up_func,
+        MOUSEBUTTONDOWN : mouse_button_down_func
     }
 
     def main(self):
